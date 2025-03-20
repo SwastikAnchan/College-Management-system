@@ -1,17 +1,13 @@
 <h1 align="center">
-    SCHOOL MANAGEMENT SYSTEM
+    College  Management system
 </h1>
 
 <h3 align="center">
-Streamline school management, class organization, and add students and faculty.<br>
+Streamline college management, class organization, and add students and faculty.<br>
 Seamlessly track attendance, assess performance, and provide feedback. <br>
 Access records, view marks, and communicate effortlessly.
 </h3>
 
-<br>
-[Youtube Video](https://youtu.be/ol650KwQkgY?si=rKcboqSv3n-e4UbC)
-<br><br>
-[LinkedIn](https://www.linkedin.com/in/yogndr/)
 
 # About
 
@@ -25,7 +21,7 @@ The School Management System is a web-based application built using the MERN (Mo
 
 - **Attendance Tracking:** Teachers can easily take attendance for their classes, mark students as present or absent, and generate attendance reports.
 
-- **Performance Assessment:** Teachers can assess students' performance by providing marks and feedback. Students can view their marks and track their progress over time.
+- **Performance Assessment:** Teachers can assess students' performance by providing marks and feedback. Students can view their marks and track their progress over time added pdf geration of marks sheet and percentage calculation and CGPA GRADE calculation
 
 - **Data Visualization:** Students can visualize their performance data through interactive charts and tables, helping them understand their academic performance at a glance.
 
@@ -42,8 +38,7 @@ The School Management System is a web-based application built using the MERN (Mo
 # Installation
 
 ```sh
-git clone https://github.com/Yogndrr/MERN-School-Management-System.git
-```
+git clone https://github.com/SwastikAnchan/College-Management-system
 Open 2 terminals in separate windows/tabs.
 
 Terminal 1: Setting Up Backend 
@@ -57,7 +52,7 @@ Create a file called .env in the backend folder.
 Inside it write this :
 
 ```sh
-MONGO_URL = mongodb://127.0.0.1/school
+MONGO_URL = mongodb://127.0.0.1/College Management
 ```
 If you are using MongoDB Compass you can use this database link but if you are using MongoDB Atlas then instead of this link write your own database link.
 
