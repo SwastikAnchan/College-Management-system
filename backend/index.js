@@ -5,7 +5,7 @@ const dotenv = require("dotenv")
 // const bodyParser = require("body-parser")
 const app = express()
 const Routes = require("./routes/route.js")
-
+const parentsRoutes = require("./routes/parents"); // Importing parents routes
 const PORT = process.env.PORT || 5000
 
 dotenv.config();
@@ -25,6 +25,7 @@ mongoose
     .catch((err) => console.log("NOT CONNECTED TO NETWORK", err))
 
 app.use('/', Routes);
+app.use("/api/parents", parentsRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server started at port no. ${PORT}`)

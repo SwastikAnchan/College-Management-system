@@ -48,10 +48,24 @@ const ChooseUser = ({ visitor }) => {
       }
       else {
         navigate('/Studentlogin');
-      }
-    }
+      }}
 
-    else if (user === "Teacher") {
+      else if (user === "Parent") {
+        if (visitor === "guest") {
+        const email = "parent@12";
+        const phone = "1234567890";
+        const rollNum = "1";
+        const parentName = "Dipesh Awasthi";
+        const fields = { parentName, email, phone, rollNum, password };
+        setLoader(true);
+        dispatch(loginUser(fields, user));
+        }
+        else {
+        navigate('/Parentlogin');
+        }
+      }
+      
+      if (user === "Teacher") {
       if (visitor === "guest") {
         const email = "tony@12"
         const fields = { email, password }
@@ -112,6 +126,21 @@ const ChooseUser = ({ visitor }) => {
               </div>
             </StyledPaper>
           </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <StyledPaper elevation={3}>
+              <div onClick={() => navigateHandler("Parent")}>
+                <Box mb={2}>
+                  <School fontSize="large" />
+                </Box>
+                <StyledTypography>
+                 Parent
+                </StyledTypography>
+                Login as a Parent to explore your child performance in acadamic session.
+              </div>
+            </StyledPaper>
+          </Grid>
+
           <Grid item xs={12} sm={6} md={4}>
             <StyledPaper elevation={3}>
               <div onClick={() => navigateHandler("Teacher")}>

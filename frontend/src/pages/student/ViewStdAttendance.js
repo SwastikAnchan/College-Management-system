@@ -75,6 +75,7 @@ const ViewStdAttendance = () => {
                             <StyledTableCell>Total Sessions</StyledTableCell>
                             <StyledTableCell>Attendance Percentage</StyledTableCell>
                             <StyledTableCell align="center">Actions</StyledTableCell>
+                            
                         </StyledTableRow>
                     </TableHead>
                     {Object.entries(attendanceBySubject).map(([subName, { present, allData, subId, sessions }], index) => {
@@ -146,7 +147,6 @@ const ViewStdAttendance = () => {
             </>
         )
     };
-
     return (
         <>
             {loading
