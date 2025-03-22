@@ -340,7 +340,7 @@ const StudentSubjects = () => {
                 ['Branch', `${sclassName.sclassName}`],
                 ['Register Number', `${currentUser.rollNum}`]
             ],
-            styles: { fontSize: 12, cellPadding: 1.5 },
+            styles: { fontSize: 12, cellPadding: 1.5 ,textColor: 0},
             headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 12 },
             tableLineColor: [0, 0, 0],
             tableLineWidth: 0.1,
@@ -358,7 +358,7 @@ const StudentSubjects = () => {
             startY: doc.lastAutoTable.finalY + 10,
             head: [['Subject', 'Max Marks', 'Marks Obtained', 'Result']],
             body: tableData,
-            styles: { fontSize: 10, cellPadding: 2 },
+            styles: { fontSize: 10, cellPadding: 2, textColor: 0 },
             headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 12 }, // Blue color
             theme: "grid"
         });
@@ -374,7 +374,7 @@ const StudentSubjects = () => {
             ['Overall Result', subjectMarks.length > 0 && subjectMarks.every(result => result.marksObtained >= 40) ? 'Pass' : 'Fail'],
             ['Eligibility', overallAttendancePercentage >= 70 ? 'Eligible' : 'Not Eligible']
             ],
-            styles: { fontSize: 12, cellPadding: 2 },
+            styles: { fontSize: 12, cellPadding: 2 , textColor: 0},
             columnStyles: {
             0: { cellWidth: 80, fontStyle: 'bold' },
             1: { cellWidth: 80 }
