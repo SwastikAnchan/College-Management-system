@@ -324,7 +324,6 @@ const StudentSubjects = () => {
         doc.setFontSize(14);
         doc.text("OFFICIAL MARK SHEET", pageWidth / 2, 28, { align: "center" });
         doc.setFontSize(10);
-        doc.text("Sessional 1", pageWidth / 2, 35, { align: "center" });
         // Institution Info
         doc.setFontSize(10)
         doc.setFont("helvetica", "normal");
