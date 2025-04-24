@@ -1,5 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import React from 'react';
+import { 
+    Container, Grid, Paper, Table, TableBody, TableCell, TableContainer, 
+    TableHead, TableRow, Typography, CircularProgress, Box 
+} from '@mui/material';
 import SeeNotice from '../../components/SeeNotice';
 import Students from "../../assets/img1.png";
 import Classes from "../../assets/img2.png";
@@ -11,173 +14,217 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllSclasses } from '../../redux/sclassRelated/sclassHandle';
 import { getAllStudents } from '../../redux/studentRelated/studentHandle';
 import { getAllTeachers } from '../../redux/teacherRelated/teacherHandle';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { calculateOverallAttendancePercentage } from '../../components/attendanceCalculator';
 
 const AdminHomePage = () => {
     const dispatch = useDispatch();
-    const { studentsList } = useSelector((state) => state.student);
-    const { sclassesList } = useSelector((state) => state.sclass);
-    const { teachersList } = useSelector((state) => state.teacher);
+    const { studentsList = [], loading: studentsLoading } = useSelector(state => state.student);
+    const { sclassesList = [], loading: classesLoading } = useSelector(state => state.sclass);
+    const { teachersList = [], loading: teachersLoading } = useSelector(state => state.teacher);
     const { currentUser } = useSelector(state => state.user);
-    const adminID = currentUser._id;
+    
+    const adminID = currentUser?._id;
 
-    useEffect(() => {
-        dispatch(getAllStudents(adminID));
-        dispatch(getAllSclasses(adminID, "Sclass"));
-        dispatch(getAllTeachers(adminID));
+    React.useEffect(() => {
+        if (adminID) {
+            dispatch(getAllStudents(adminID));
+            dispatch(getAllSclasses(adminID, "Sclass"));
+            dispatch(getAllTeachers(adminID));
+        }
     }, [adminID, dispatch]);
 
-    // Calculate Analytics
-    const numberOfStudents = studentsList?.length || 0;
-    const numberOfClasses = sclassesList?.length || 0;
-    const numberOfTeachers = teachersList?.length || 0;
+    // Modified attendance calculation
+    const getStudentAttendanceData = (student) => {
+        const attendanceRecords = student?.attendance || [];
+        const presentSessions = attendanceRecords.filter(record => record.status === 'Present').length;
+        const totalSessions = attendanceRecords.length;
+        
+        return {
+            totalSessions,
+            presentSessions,
+            attendancePercentage: totalSessions > 0 
+                ? (presentSessions / totalSessions) * 100 
+                : 0
+        };
+    };
 
-    
+    const attendanceShortageList = studentsList.map(student => {
+        const attendanceData = getStudentAttendanceData(student);
+        return {
+            ...student,
+            ...attendanceData,
+            className: student?.sclassName?.sclassName || 'N/A'
+        };
+    }).filter(student => student.attendancePercentage < 75)
+    //   .sort((a, b) => a.attendancePercentage - b.attendancePercentage);
 
-    // Calculate pass percentage
-    const passPercentage = studentsList && studentsList.length > 0 
-        ? (studentsList.filter(student => student.result?.overallStatus === 'pass').length / numberOfStudents * 100)
+    // School statistics
+    const numberOfStudents = studentsList.length;
+    const numberOfClasses = sclassesList.length;
+    const numberOfTeachers = teachersList.length;
+
+    // Academic performance
+    const passedStudents = studentsList.filter(student => 
+        student?.result?.overallStatus === 'pass'
+    ).length;
+    const failedStudents = numberOfStudents - passedStudents;
+    const passPercentage = numberOfStudents > 0 
+        ? (passedStudents / numberOfStudents) * 100 
         : 0;
 
-    // Get students with low attendance (<75%)
-    const attendanceShortageList = studentsList?.filter(student => {
-        if (!student.attendance) return false;
-        const presentDays = student.attendance.presentDays || 0;
-        const totalDays = student.attendance.totalDays || 1; // Avoid division by zero
-        return (presentDays / totalDays) * 100 < 75;
-    }) || [];
+    // Overall attendance calculation
+    const overallAttendanceData = studentsList.reduce((acc, student) => {
+        const { totalSessions, presentSessions } = getStudentAttendanceData(student);
+        return {
+            totalSessions: acc.totalSessions + totalSessions,
+            presentSessions: acc.presentSessions + presentSessions
+        };
+    }, { totalSessions: 0, presentSessions: 0 });
 
-    // Calculate overall attendance percentage
-    const overallAttendancePercentage = calculateOverallAttendancePercentage(
-        studentsList.flatMap(student => student.attendance?.records || [])
-    );
+    const overallAttendancePercentage = overallAttendanceData.totalSessions > 0
+        ? (overallAttendanceData.presentSessions / overallAttendanceData.totalSessions) * 100
+        : 0;
 
-    // Mock performance data (replace with real data)
-    const performanceData = [
-        { month: 'Jan', passPercentage: 75 },
-        { month: 'Feb', passPercentage: 82 },
-        { month: 'Mar', passPercentage: 78 },
-        { month: 'Apr', passPercentage: 85 },
-        { month: 'May', passPercentage: 88 },
-    ];
+    if (studentsLoading || classesLoading || teachersLoading) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+                <CircularProgress size={60} />
+            </Box>
+        );
+    }
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
+                {/* Summary Cards */}
                 <Grid item xs={12} md={3} lg={3}>
-                    <StyledPaper>
-                        <img src={Students} alt="Students" style={{ width: 60, height: 60 }} />
+                    <StyledPaper elevation={3}>
+                        <img src={Students} alt="Students" style={iconStyle} />
                         <Title>Total Students</Title>
                         <Data start={0} end={numberOfStudents} duration={2.5} />
                     </StyledPaper>
                 </Grid>
                 <Grid item xs={12} md={3} lg={3}>
-                    <StyledPaper>
-                        <img src={Classes} alt="Classes" style={{ width: 60, height: 60 }} />
+                    <StyledPaper elevation={3}>
+                        <img src={Classes} alt="Classes" style={iconStyle} />
                         <Title>Total Classes</Title>
-                        <Data start={0} end={numberOfClasses} duration={5} />
+                        <Data start={0} end={numberOfClasses} duration={2.5} />
                     </StyledPaper>
                 </Grid>
                 <Grid item xs={12} md={3} lg={3}>
-                    <StyledPaper>
-                        <img src={Teachers} alt="Teachers" style={{ width: 60, height: 60 }} />
+                    <StyledPaper elevation={3}>
+                        <img src={Teachers} alt="Teachers" style={iconStyle} />
                         <Title>Total Teachers</Title>
                         <Data start={0} end={numberOfTeachers} duration={2.5} />
                     </StyledPaper>
                 </Grid>
-                <Grid item xs={12} md={3} lg={3}>
-                    <StyledPaper>
-                        <img src={Analytics} alt="Analytics" style={{ width: 60, height: 60 }} />
-                        <Title>Pass Percentage</Title>
-                        <Data start={0} end={passPercentage} duration={2.5} suffix="%" decimals={1} />
-                    </StyledPaper>
-                </Grid>
+               
 
-                {/* Performance Chart */}
-                <Grid item xs={12} md={6} lg={6}>
-                    <Paper sx={{ p: 2, height: 300 }}>
+                {/* Attendance Shortage Table */}
+                <Grid item xs={12}>
+                    <StyledPaper elevation={3}>
                         <Typography variant="h6" gutterBottom>
-                            Monthly Performance Trend
+                            Attendance Shortage ({attendanceShortageList.length} students below 75%)
                         </Typography>
-                        <ResponsiveContainer width="100%" height="80%">
-                            <LineChart data={performanceData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="month" />
-                                <YAxis />
-                                <Tooltip />
-                                <Line type="monotone" dataKey="passPercentage" stroke="#8884d8" />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </Paper>
-                </Grid>
-
-                {/* Attendance Shortage List */}
-                <Grid item xs={12} md={6} lg={6}>
-                    <Paper sx={{ p: 2, height: 300, overflow: 'auto' }}>
-                        <Typography variant="h6" gutterBottom>
-                            Attendance Shortage ({attendanceShortageList.length})
-                        </Typography>
-                        <TableContainer>
-                            <Table size="small">
+                        <TableContainer sx={{ maxHeight: 440 }}>
+                            <Table stickyHeader size="small">
                                 <TableHead>
-                                    <TableRow>
-                                        <TableCell>Student Name</TableCell>
-                                        <TableCell>Class</TableCell>
-                                        <TableCell align="right">Attendance %</TableCell>
-                                    </TableRow>
+                                    <StyledTableRow>
+                                        <StyledTableCell>Student Name</StyledTableCell>
+                                        <StyledTableCell>Roll Number</StyledTableCell>
+                                        <StyledTableCell>Class</StyledTableCell>
+                                        <StyledTableCell align="right">Present</StyledTableCell>
+                                        <StyledTableCell align="right">Total Sessions</StyledTableCell>
+                                        <StyledTableCell align="right">Attendance %</StyledTableCell>
+                                    </StyledTableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {attendanceShortageList.map((student) => {
-                                        const presentDays = student.attendance?.presentDays || 0;
-                                        const totalDays = student.attendance?.totalDays || 1;
-                                        const attendancePercentage = (presentDays / totalDays) * 100;
-
-                                        return (
-                                            <TableRow key={student._id}>
-                                                <TableCell>{student.name}</TableCell>
-                                                <TableCell>{student.sclassName?.className }</TableCell>
-                                                <TableCell align="right">
-                                                    {overallAttendancePercentage.toFixed(1)}%
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
+                                    {attendanceShortageList.length > 0 ? (
+                                        attendanceShortageList.map((student) => (
+                                            <StyledTableRow key={student._id} hover>
+                                                <StyledTableCell>{student.name || 'N/A'}</StyledTableCell>
+                                                <StyledTableCell>{student.rollNum || 'N/A'}</StyledTableCell>
+                                                <StyledTableCell>{student.className}</StyledTableCell>
+                                                <StyledTableCell align="right">{student.presentSessions}</StyledTableCell>
+                                                <StyledTableCell align="right">{student.totalSessions}</StyledTableCell>
+                                                <StyledTableCell 
+                                                    align="right"
+                                                    sx={{
+                                                        color: student.attendancePercentage < 50 ? 'error.main' : 'warning.main',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                >
+                                                    {student.attendancePercentage.toFixed(1)}%
+                                                </StyledTableCell>
+                                            </StyledTableRow>
+                                        ))
+                                    ) : (
+                                        <StyledTableRow>
+                                            <StyledTableCell colSpan={6} align="center">
+                                                No students with attendance shortage
+                                            </StyledTableCell>
+                                        </StyledTableRow>
+                                    )}
                                 </TableBody>
                             </Table>
                         </TableContainer>
-                    </Paper>
+                    </StyledPaper>
                 </Grid>
 
-                <Grid item xs={12} md={12} lg={12}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                {/* Notices Section */}
+                <Grid item xs={12}>
+                    <StyledPaper elevation={3}>
                         <SeeNotice />
-                    </Paper>
+                    </StyledPaper>
                 </Grid>
             </Grid>
         </Container>
     );
 };
 
+// Styles
+const iconStyle = {
+    width: 60,
+    height: 60,
+    marginBottom: 10
+};
+
 const StyledPaper = styled(Paper)`
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  height: 200px;
-  justify-content: space-between;
-  align-items: center;
-  text-align: center;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.3s ease;
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
 `;
 
-const Title = styled.p`
-  font-size: 1rem;
-  margin: 8px 0;
+const Title = styled(Typography)`
+    font-size: 1rem;
+    margin: 8px 0;
+    font-weight: 500;
+    color: #555;
 `;
 
 const Data = styled(CountUp)`
-  font-size: 1.5rem;
-  color: #1976d2;
-  font-weight: bold;
+    font-size: 2rem;
+    color: #1976d2;
+    font-weight: bold;
+    margin: 8px 0;
+`;
+
+const StyledTableRow = styled(TableRow)`
+    &:nth-of-type(odd) {
+        background-color: #f9f9f9;
+    }
+    &:hover {
+        background-color: #f0f0f0;
+    }
+`;
+
+const StyledTableCell = styled(TableCell)`
+    padding: 12px;
 `;
 
 export default AdminHomePage;

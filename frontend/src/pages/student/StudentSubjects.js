@@ -136,237 +136,154 @@ const StudentSubjects = () => {
         );
     };
 
-const generatePDF = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
+    const generatePDF = () => {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
     
-    const currentDate = new Date().toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    });
-
-    // Color Scheme
-    const primaryColor = [41, 128, 185]; // Blue
-    const successColor = [46, 204, 113]; // Green
-    const dangerColor = [231, 76, 60];  // Red
-
-    // 🏫 Institution Header
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...primaryColor);
-    doc.setFontSize(20);
-    doc.text("N.R.A.M POLYTECHNIC,NITTE", pageWidth / 2, 20, { align: "center" });
-    doc.text("OFFICIAL GRADE REPORT", pageWidth / 2, 45, { align: "center" });
+        const currentDate = new Date().toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
     
-    // Institution Details
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text("Affiliated to Department of Technical Education, Karnataka", pageWidth / 2, 52, { align: "center" });
-    doc.text("AICTE Approved | NBA Accredited", pageWidth / 2, 58, { align: "center" });
-
-     // Divider line
-     doc.setDrawColor(...primaryColor);
-     doc.setLineWidth(0.5);
-     doc.line(20, 35, pageWidth - 20, 35);
-
-    // 👨‍🎓 Student Information
-    autoTable(doc, {
-        startY: 65,
-        head: [['STUDENT INFORMATION', '']],
-        body: [
-            ['Name', currentUser.name],
-            ['Register Number', currentUser.rollNum],
-            ['Branch/Department', sclassName.sclassName],
-            ['Semester', currentUser.semester || "N/A"],
-            ['Academic Year', '2023-2024'],
-            ['Report Date', currentDate]
-        ],
-        theme: 'grid',
-        headStyles: {
-            fillColor: primaryColor,
-            textColor: 255,
-            fontSize: 12,
-            halign: 'center'
-        },
-        bodyStyles: {
-            textColor: [33, 33, 33],
-            fontSize: 11,
-            cellPadding: 4
-        },
-        columnStyles: {
-            0: { fontStyle: 'bold', cellWidth: 60 },
-            1: { cellWidth: 'auto' }
-        }
-    });
-
-    // 📊 Academic Performance Summary
-    const overallResult = subjectMarks.every(result => result.marksObtained >= 40) ? 
-        { content: 'PASS', styles: { textColor: successColor } } : 
-        { content: 'FAIL', styles: { textColor: dangerColor } };
+        const primaryColor = [41, 128, 185];
+        const successColor = [46, 204, 113];
+        const dangerColor = [231, 76, 60];
+    
+        // Header
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...primaryColor);
+        doc.setFontSize(16);
+        doc.text("N.R.A.M POLYTECHNIC, NITTE", pageWidth / 2, 20, { align: "center" });
+        doc.text("OFFICIAL GRADE REPORT", pageWidth / 2, 30, { align: "center" });
+    
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        doc.text("Affiliated to Department of Technical Education, Karnataka", pageWidth / 2, 36, { align: "center" });
+        doc.text("AICTE Approved | NBA Accredited", pageWidth / 2, 41, { align: "center" });
+    
+        // Line
+        doc.setDrawColor(...primaryColor);
+        doc.setLineWidth(0.5);
+        doc.line(20, 45, pageWidth - 20, 45);
+    
+        // Student Info
+        autoTable(doc, {
+            startY: 50,
+            head: [['STUDENT INFORMATION', '']],
+            body: [
+                ['Name', currentUser.name],
+                ['Register Number', currentUser.rollNum],
+                ['Semester/Branch', sclassName.sclassName],
+                ['Academic Year', '2023-2024'],
+                ['Report Date', currentDate]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: primaryColor, textColor: 255, fontSize: 11 },
+            bodyStyles: { textColor: [33, 33, 33], fontSize: 10, cellPadding: 2 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55 }, 1: { cellWidth: 'auto' } }
+        });
+    
+        // Academic Summary
+        const overallResult = subjectMarks.every(result => result.marksObtained >= 40)
+            ? { content: 'PASS', styles: { textColor: successColor } }
+            : { content: 'FAIL', styles: { textColor: dangerColor } };
         const overallAttendancePercentage = calculateOverallAttendancePercentage(subjectAttendance);
-
-    autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 10,
-        head: [['ACADEMIC SUMMARY', '']],
-        body: [
-            ['Total Marks Obtained', totalMarks],
-            ['Percentage', `${percentage}%`],
-            ['CGPA', cgpa],
-            ['Attendance Percentage', `${overallAttendancePercentage.toFixed(2)}%`],
-            ['Overall Result', overallResult],
-            ['Exam Eligibility', overallAttendancePercentage >= 70 ? 
-                { content: 'ELIGIBLE', styles: { textColor: successColor } } : 
-                { content: 'NOT ELIGIBLE', styles: { textColor: dangerColor } }]
-        ],
-        theme: 'grid',
-        headStyles: {
-            fillColor: primaryColor,
-            textColor: 255,
-            fontSize: 12,
-            halign: 'center'
-        },
-        bodyStyles: {
-            textColor: [33, 33, 33],
-            fontSize: 11,
-            cellPadding: 4
-        },
-        columnStyles: {
-            0: { fontStyle: 'bold', cellWidth: 80 },
-            1: { cellWidth: 'auto' }
-        }
-    });
-
-    // 📝 Subject-wise Marks
-    const marksData = subjectMarks.map(result => [
-        result.subName.subName,
-        '100',
-        result.marksObtained,
-        { 
-            content: result.marksObtained >= 40 ? 'PASS' : 'FAIL',
-            styles: {
-                textColor: result.marksObtained >= 40 ? successColor : dangerColor,
-                fontStyle: 'bold'
-            }
-        },
-        result.marksObtained >= 40 ? '✓' : '✗'
-    ]);
-
-    autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 15,
-        head: [
-            [
-                'Subject', 
-                'Max Marks', 
-                'Marks Obtained', 
-                'Result', 
-                'Status'
-            ]
-        ],
-        body: marksData,
-        headStyles: {
-            fillColor: [52, 152, 219], // Light blue
-            textColor: 255,
-            fontSize: 11,
-            halign: 'center'
-        },
-        bodyStyles: {
-            textColor: [33, 33, 33],
-            fontSize: 10,
-            cellPadding: 3,
-            halign: 'center'
-        },
-        columnStyles: {
-            0: { cellWidth: 60, halign: 'left' },  // Subject column left-aligned
-            2: { fontStyle: 'bold' },  // Marks obtained bold
-            3: { cellWidth: 30 }  // Result column narrower
-        },
-        alternateRowStyles: {
-            fillColor: [245, 245, 245]
-        },
-        margin: { top: 10 },
-        didDrawPage: function () {
-           
-            // Footer on each page
-            doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
-        }
-    });
-
-    // ℹ️ Grading Information
-    autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 10,
-        head: [['GRADING SYSTEM', 'Grade', 'CGPA', 'Percentage']],
-        body: [
-            ['Outstanding', 'A+', '10', '90-100%'],
-            ['Excellent', 'A', '9', '80-89%'],
-            ['Very Good', 'B+', '8', '70-79%'],
-            ['Good', 'B', '7', '60-69%'],
-            ['Average', 'C', '6', '50-59%'],
-            ['Below Average', 'D', '5', '40-49%'],
-            ['Fail', 'F', '0', 'Below 40%']
-        ],
-        headStyles: {
-            fillColor: primaryColor,
-            textColor: 255,
-            fontSize: 11,
-            halign: 'center'
-        },
-        bodyStyles: {
-            textColor: [33, 33, 33],
-            fontSize: 10,
-            cellPadding: 3,
-            halign: 'center'
-        },
-        columnStyles: {
-            0: { halign: 'left', fontStyle: 'bold' }
-        }
-    });
-
-    // 📌 Important Notes
-    autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 10,
-        body: [
-            [
-                { 
-                    content: 'IMPORTANT NOTES:', 
-                    styles: { 
-                        fontStyle: 'bold', 
-                        fontSize: 11,
-                        textColor: dangerColor
-                    } 
+    
+        autoTable(doc, {
+            startY: doc.lastAutoTable.finalY + 6,
+            head: [['ACADEMIC SUMMARY', '']],
+            body: [
+                ['Total Marks Obtained', totalMarks],
+                ['Percentage', `${percentage}%`],
+                ['CGPA', cgpa],
+                ['Attendance Percentage', `${overallAttendancePercentage.toFixed(2)}%`],
+                ['Overall Result', overallResult],
+                ['Exam Eligibility', overallAttendancePercentage >= 70
+                    ? { content: 'ELIGIBLE', styles: { textColor: successColor } }
+                    : { content: 'NOT ELIGIBLE', styles: { textColor: dangerColor } }]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: primaryColor, textColor: 255, fontSize: 11 },
+            bodyStyles: { textColor: [33, 33, 33], fontSize: 10, cellPadding: 2 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 75 }, 1: { cellWidth: 'auto' } }
+        });
+    
+        // Subject Marks
+        const marksData = subjectMarks.map(result => [
+            result.subName.subName,
+            '100',
+            result.marksObtained,
+            {
+                content: result.marksObtained >= 40 ? 'PASS' : 'FAIL',
+                styles: {
+                    textColor: result.marksObtained >= 40 ? successColor : dangerColor,
+                    fontStyle: 'bold'
                 }
+            },
+            result.marksObtained >= 40 ? '✓' : '✗'
+        ]);
+    
+        autoTable(doc, {
+            startY: doc.lastAutoTable.finalY + 8,
+            head: [['Subject', 'Max', 'Obtained', 'Result', 'Status']],
+            body: marksData,
+            headStyles: { fillColor: [52, 152, 219], textColor: 255, fontSize: 10 },
+            bodyStyles: { textColor: [33, 33, 33], fontSize: 9, cellPadding: 2 },
+            columnStyles: {
+                0: { cellWidth: 60, halign: 'left' },
+                2: { fontStyle: 'bold' },
+                3: { cellWidth: 25 }
+            },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            didDrawPage: function () {
+                doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
+            }
+        });
+    
+        // Grading Info
+        autoTable(doc, {
+            startY: doc.lastAutoTable.finalY + 8,
+            head: [['GRADING SYSTEM', 'Grade', 'CGPA', 'Percentage']],
+            body: [
+                ['Outstanding', 'A+', '10', '90-100%'],
+                ['Excellent', 'A', '9', '80-89%'],
+                ['Very Good', 'B+', '8', '70-79%'],
+                ['Good', 'B', '7', '60-69%'],
+                ['Average', 'C', '6', '50-59%'],
+                ['Below Average', 'D', '5', '40-49%'],
+                ['Fail', 'F', '0', 'Below 40%']
             ],
-            [
-                '• Minimum 40% marks required in each subject to pass'
+            headStyles: { fillColor: primaryColor, textColor: 255, fontSize: 10 },
+            bodyStyles: { textColor: [33, 33, 33], fontSize: 9, cellPadding: 2 }
+        });
+    
+        // Notes
+        autoTable(doc, {
+            startY: doc.lastAutoTable.finalY + 6,
+            body: [
+                [{ content: 'IMPORTANT NOTES:', styles: { fontStyle: 'bold', fontSize: 10, textColor: dangerColor } }],
+                ['• Minimum 40% marks required in each subject to pass'],
+                ['• Minimum 70% attendance required to be eligible for exams'],
+                ['• This is an official computer-generated document'],
+                ['• Contact examination department for any discrepancies']
             ],
-            [
-                '• Minimum 70% attendance required to be eligible for exams'
-            ],
-            [
-                '• This is an official computer-generated document'
-            ],
-            [
-                '• Contact examination department for any discrepancies'
-            ]
-        ],
-        theme: 'plain',
-        bodyStyles: {
-            textColor: [33, 33, 33],
-            fontSize: 10,
-            cellPadding: 2
-        }
-    });
-
-    // 🏁 Footer
-    doc.setFontSize(8);
-    doc.setTextColor(100);
-    doc.text("This document is system generated and does not require signature", pageWidth / 2, doc.internal.pageSize.getHeight() - 15, { align: "center" });
-    doc.text(`Report ID: ${currentUser.rollNum}-${Date.now().toString().slice(-6)}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
-
-    // 💾 Save PDF
-    doc.save(`${currentUser.name}_MarkSheet.pdf`);
-};
-    const renderChartSection = () => {
+            theme: 'plain',
+            bodyStyles: { textColor: [33, 33, 33], fontSize: 9, cellPadding: 1.5 }
+        });
+    
+        // Footer
+        doc.setFontSize(7);
+        doc.setTextColor(100);
+        const bottomY = doc.internal.pageSize.getHeight();
+        doc.text("This document is system generated and does not require signature", pageWidth / 2, bottomY - 12, { align: "center" });
+        doc.text(`Report ID: ${currentUser.rollNum}-${Date.now().toString().slice(-6)}`, pageWidth / 2, bottomY - 7, { align: "center" });
+    
+        // Save
+        doc.save(`${currentUser.name}_MarkSheet.pdf`);
+    };
+        const renderChartSection = () => {
         return <CustomBarChart chartData={subjectMarks} dataKey="marksObtained" />;
     };
 

@@ -204,12 +204,47 @@ const ClassDetails = () => {
     }
 
     const ClassTeachersSection = () => {
+        const teacherColumns = [
+            { id: 'name', label: 'Name', minWidth: 170 },
+            { id: 'email', label: 'Email', minWidth: 200 },
+        ];
+
+        const teacherRows = sclassDetails.teachers?.map((teacher) => {
+            return {
+                name: teacher.name,
+                email: teacher.email,
+                id: teacher._id,
+            };
+        }) || [];
+
+        const TeachersButtonHaver = ({ row }) => {
+            return (
+                <>
+                    <BlueButton
+                        variant="contained"
+                        onClick={() => navigate("/Admin/teachers/teacher/" + row.id)}
+                    >
+                        View
+                    </BlueButton>
+                </>
+            );
+        };
+
         return (
             <>
-                Teachers
+                <Typography variant="h5" gutterBottom>
+                    Teachers List:
+                </Typography>
+                {teacherRows.length > 0 ? (
+                    <TableTemplate buttonHaver={TeachersButtonHaver} columns={teacherColumns} rows={teacherRows} />
+                ) : (
+                    <Typography variant="body1" color="textSecondary">
+                        No teachers assigned to this class.
+                    </Typography>
+                )}
             </>
-        )
-    }
+        );
+    };
 
     const ClassDetailsSection = () => {
         const numberOfSubjects = subjectsList.length;

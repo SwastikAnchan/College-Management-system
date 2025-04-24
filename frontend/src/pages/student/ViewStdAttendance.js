@@ -71,58 +71,52 @@ const ViewStdAttendance = () => {
         });
     
         // 🎨 Colors
-        const primaryColor = [41, 128, 185];  // Blue
-        const secondaryColor = [52, 152, 219];  // Light Blue
-        const accentColor = [231, 76, 60];  // Red for important info
+        const primaryColor = [41, 128, 185];
+        const secondaryColor = [52, 152, 219];
+        const successColor = [39, 174, 96];
+        const accentColor = [231, 76, 60];
     
-        // 📌 Institution Header with Logo Placeholder
+        // 📌 Header
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...primaryColor);
-        doc.setFontSize(20);
-        doc.text("N.R.A.M POLYTECHNIC", pageWidth / 2, 20, { align: "center" });
-        
-        doc.setFontSize(16);
-        doc.text("Nitte, Karkala Taluk", pageWidth / 2, 28, { align: "center" });
-        
-        // Divider line
+        doc.setFontSize(18);
+        doc.text("N.R.A.M POLYTECHNIC", pageWidth / 2, 18, { align: "center" });
+    
+        doc.setFontSize(14);
+        doc.text("STUDENT ATTENDANCE REPORT", pageWidth / 2, 30, { align: "center" });
+    
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        doc.text("Affiliated to Department of Technical Education, Karnataka", pageWidth / 2, 36, { align: "center" });
+        doc.text("AICTE Approved | NBA Accredited", pageWidth / 2, 41, { align: "center" });
+    
         doc.setDrawColor(...primaryColor);
         doc.setLineWidth(0.5);
-        doc.line(20, 35, pageWidth - 20, 35);
-        
-        // Report Title
-        doc.setFontSize(18);
-        doc.text("STUDENT ATTENDANCE REPORT", pageWidth / 2, 45, { align: "center" });
-        
-        // Institution Details
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        doc.text("Affiliated to Department of Technical Education, Karnataka", pageWidth / 2, 52, { align: "center" });
-        doc.text("AICTE Approved | NBA Accredited", pageWidth / 2, 58, { align: "center" });
+        doc.line(20, 45, pageWidth - 20, 45);
     
-        // 📌 Student Information Table
+        // 📋 Student Info
         autoTable(doc, {
-            startY: 65,
+            startY: 50,
             head: [['STUDENT INFORMATION', '']],
             body: [
                 ['Full Name', currentUser?.name || "N/A"],
                 ['Register Number', currentUser?.rollNum || "N/A"],
                 ['Branch/Department', sclassName?.sclassName || "N/A"],
-                // ['Semester', currentUser?.semester || "N/A"],
                 ['Academic Year', '2023-2024'],
-                ['Report Date and Time ', currentDate],
+                ['Report Date & Time', currentDate]
             ],
             theme: 'grid',
             headStyles: {
                 fillColor: primaryColor,
                 textColor: 255,
-                fontSize: 12,
+                fontSize: 11,
                 halign: 'center'
             },
             bodyStyles: {
                 textColor: [33, 33, 33],
-                fontSize: 11,
-                cellPadding: 4
+                fontSize: 10,
+                cellPadding: 3
             },
             columnStyles: {
                 0: { fontStyle: 'bold', cellWidth: 60 },
@@ -131,16 +125,16 @@ const ViewStdAttendance = () => {
             margin: { top: 5 }
         });
     
-        // 📌 Attendance Summary Section
+        // 📊 Summary
         const overallPercentage = calculateOverallAttendancePercentage(subjectAttendance);
         autoTable(doc, {
-            startY: doc.lastAutoTable.finalY + 10,
+            startY: doc.lastAutoTable.finalY + 5,
             head: [['ATTENDANCE SUMMARY', '']],
             body: [
                 ['Total Subjects', Object.keys(attendanceBySubject).length],
                 ['Overall Attendance', `${overallPercentage.toFixed(1)}%`],
-                ['Attendance Status', overallPercentage >= 75 ? 
-                    { content: 'Satisfactory', styles: { textColor: [39, 174, 96] } } : 
+                ['Attendance Status', overallPercentage >= 75 ?
+                    { content: 'Satisfactory', styles: { textColor: successColor } } :
                     { content: 'Needs Improvement', styles: { textColor: accentColor } }],
                 ['Minimum Required', '75%']
             ],
@@ -148,13 +142,13 @@ const ViewStdAttendance = () => {
             headStyles: {
                 fillColor: primaryColor,
                 textColor: 255,
-                fontSize: 12,
+                fontSize: 11,
                 halign: 'center'
             },
             bodyStyles: {
                 textColor: [33, 33, 33],
-                fontSize: 11,
-                cellPadding: 4
+                fontSize: 10,
+                cellPadding: 3
             },
             columnStyles: {
                 0: { fontStyle: 'bold', cellWidth: 60 },
@@ -162,107 +156,84 @@ const ViewStdAttendance = () => {
             }
         });
     
-        // 📌 Detailed Attendance Table
+        // 📚 Subject-wise Details
         const attendanceRows = Object.entries(attendanceBySubject).map(([subName, { present, sessions }]) => {
             const percentage = calculateSubjectAttendancePercentage(present, sessions);
             return [
                 subName,
                 present,
                 sessions,
-                { 
-                    content: `${percentage}%`, 
-                    styles: { 
-                        textColor: percentage >= 75 ? [39, 174, 96] : accentColor,
+                {
+                    content: `${percentage}%`,
+                    styles: {
+                        textColor: percentage >= 75 ? successColor : accentColor,
                         fontStyle: percentage >= 75 ? 'bold' : 'normal'
-                    } 
+                    }
                 },
                 percentage >= 75 ? '✓' : '✗'
             ];
         });
     
         autoTable(doc, {
-            startY: doc.lastAutoTable.finalY + 15,
-            head: [
-                [
-                    'Subject', 
-                    'Present', 
-                    'Total Sessions', 
-                    'Attendance %', 
-                    'Status'
-                ]
-            ],
+            startY: doc.lastAutoTable.finalY + 8,
+            head: [['Subject', 'Present', 'Sessions', 'Attendance %', 'Status']],
             body: attendanceRows,
             headStyles: {
                 fillColor: secondaryColor,
                 textColor: 255,
-                fontSize: 11,
+                fontSize: 10,
                 halign: 'center'
             },
             bodyStyles: {
                 textColor: [33, 33, 33],
-                fontSize: 10,
-                cellPadding: 3,
+                fontSize: 9,
+                cellPadding: 2.5,
                 halign: 'center'
             },
             columnStyles: {
-                0: { cellWidth: 60, halign: 'left' },  // Subject column left-aligned
-                3: { fontStyle: 'bold' }  // Percentage column bold
+                0: { halign: 'left' },
+                3: { fontStyle: 'bold' }
             },
             alternateRowStyles: {
                 fillColor: [245, 245, 245]
             },
-            margin: { top: 10 },
-            didDrawPage: function (data) {
-               
-                // Footer on each page
+            margin: { top: 5 },
+            didDrawPage: function () {
+                doc.setFontSize(8);
+                doc.setTextColor(100);
                 doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
             }
         });
     
-        // 📌 Important Notes Section
+        // 📌 Notes
         autoTable(doc, {
-            startY: doc.lastAutoTable.finalY + 10,
+            startY: doc.lastAutoTable.finalY + 5,
             body: [
-                [
-                    { 
-                        content: 'IMPORTANT NOTES:', 
-                        styles: { 
-                            fontStyle: 'bold', 
-                            fontSize: 11,
-                            textColor: accentColor
-                        } 
-                    }
-                ],
-                [
-                    '• Minimum 75% attendance is required to appear for exams'
-                ],
-                [
-                    '• This is an official computer-generated document'
-                ],
-                [
-                    '• Contact your department for any discrepancies'
-                ]
+                [{ content: 'IMPORTANT NOTES:', styles: { fontStyle: 'bold', fontSize: 10, textColor: accentColor } }],
+                ['• Minimum 75% attendance is required to appear for exams'],
+                ['• This is an official computer-generated document'],
+                ['• Contact your department for any discrepancies']
             ],
             theme: 'plain',
             bodyStyles: {
                 textColor: [33, 33, 33],
-                fontSize: 10,
+                fontSize: 9,
                 cellPadding: 2
             },
             margin: { top: 5 }
         });
     
-        // 📌 Footer
-        doc.setFontSize(8);
+        // 📄 Footer
+        doc.setFontSize(7.5);
         doc.setTextColor(100);
         doc.text("This document is system generated and does not require signature", pageWidth / 2, doc.internal.pageSize.getHeight() - 15, { align: "center" });
         doc.text(`Report ID: ${currentUser?.rollNum || "N/A"}-${Date.now().toString().slice(-6)}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
     
-        // 📌 Save PDF with student name in filename
+        // 💾 Save
         const fileName = `Attendance_Report_${currentUser?.rollNum || "Student"}_${currentDate.replace(/\//g, '-')}.pdf`;
         doc.save(fileName);
     };
-
+    
     /** 📌 Table View */
     const renderTableSection = () => {
         return (
