@@ -17,27 +17,24 @@ import {
 } from '@mui/material';
 import { getUserDetails } from '../../redux/userRelated/userHandle';
 import CustomBarChart from '../../components/CustomBarChart';
-// import { jsPDF } from 'jspdf'; // For PDF generation
-// import 'jspdf-autotable'; // For table support in PDF
-
 import InsertChartIcon from '@mui/icons-material/InsertChart';
 import InsertChartOutlinedIcon from '@mui/icons-material/InsertChartOutlined';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import { StyledTableCell, StyledTableRow } from '../../components/styles';
-import { calculateOverallAttendancePercentage, calculateSubjectAttendancePercentage, groupAttendanceBySubject } from '../../components/attendanceCalculator';
+import { calculateOverallAttendancePercentage } from '../../components/attendanceCalculator';
 
 const StudentSubjects = () => {
     const dispatch = useDispatch();
     const { subjectsList, sclassDetails } = useSelector((state) => state.sclass);
-    const { userDetails, currentUser, loading, response, error } = useSelector((state) => state.user);
+    const { userDetails, currentUser, loading } = useSelector((state) => state.user);
 
     const [subjectMarks, setSubjectMarks] = useState([]);
     const [selectedSection, setSelectedSection] = useState('table');
     const [totalMarks, setTotalMarks] = useState(0);
     const [percentage, setPercentage] = useState(0);
     const [cgpa, setCgpa] = useState(0);
-    const [attendancePercentage, setAttendancePercentage] = useState(0);
+    const [, setAttendancePercentage] = useState(0);
     const [subjectAttendance, setSubjectAttendance] = useState([]);
 
     useEffect(() => {
@@ -77,46 +74,18 @@ const StudentSubjects = () => {
 
         setTotalMarks(total);
 
-        const calculatedPercentage = (total / maxMarks) * 100;
+        const calculatedPercentage = maxMarks > 0 ? (total / maxMarks) * 100 : 0;
         setPercentage(calculatedPercentage.toFixed(2));
 
         const calculatedCgpa = calculatedPercentage / 9.5; // CGPA formula
         setCgpa(calculatedCgpa.toFixed(2));
     };
 
-    const handleSectionChange = (event, newSection) => {
+    const handleSectionChange = (_, newSection) => {
         setSelectedSection(newSection);
     };
-    const sclassName = currentUser.sclassName
-    // const downloadPDF = () => {
-    //     const doc = new jsPDF();
-    //     doc.setFontSize(18);
-    //     doc.text('Mark Sheet', 10, 10);
 
-    //     // Add Student Details
-    //     doc.setFontSize(12);
-    //     doc.text(`Name: ${currentUser.name}`, 10, 20);
-    //     doc.text(`Class: ${sclassDetails.sclassName}`, 10, 30);
-    //     doc.text(`Attendance Percentage: ${attendancePercentage}%`, 10, 40);
-
-    //     // Add Marks Table
-    //     const tableData = subjectMarks.map((result) => [result.subName.subName, result.marksObtained]);
-    //     doc.autoTable({
-    //         head: [['Subject', 'Marks Obtained']],
-    //         body: tableData,
-    //         startY: 50,
-    //     });
-
-    //     // Add Total, Percentage, and CGPA
-    //     doc.text(`Total Marks: ${totalMarks}`, 10, doc.lastAutoTable.finalY + 10);
-    //     doc.text(`Percentage: ${percentage}%`, 10, doc.lastAutoTable.finalY + 20);
-    //     doc.text(`CGPA: ${cgpa}`, 10, doc.lastAutoTable.finalY + 30);
-
-    //     doc.save('mark_sheet.pdf');
-    // };
-
-        
-
+    const sclassName = currentUser.sclassName;
 
     const renderTableSection = () => {
         const overallAttendancePercentage = calculateOverallAttendancePercentage(subjectAttendance);
@@ -167,86 +136,236 @@ const StudentSubjects = () => {
         );
     };
 
-    const generatePDF = () => {
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
+const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    const currentDate = new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    });
+
+    // Color Scheme
+    const primaryColor = [41, 128, 185]; // Blue
+    const successColor = [46, 204, 113]; // Green
+    const dangerColor = [231, 76, 60];  // Red
+
+    // 🏫 Institution Header
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...primaryColor);
+    doc.setFontSize(20);
+    doc.text("N.R.A.M POLYTECHNIC,NITTE", pageWidth / 2, 20, { align: "center" });
+    doc.text("OFFICIAL GRADE REPORT", pageWidth / 2, 45, { align: "center" });
+    
+    // Institution Details
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text("Affiliated to Department of Technical Education, Karnataka", pageWidth / 2, 52, { align: "center" });
+    doc.text("AICTE Approved | NBA Accredited", pageWidth / 2, 58, { align: "center" });
+
+     // Divider line
+     doc.setDrawColor(...primaryColor);
+     doc.setLineWidth(0.5);
+     doc.line(20, 35, pageWidth - 20, 35);
+
+    // 👨‍🎓 Student Information
+    autoTable(doc, {
+        startY: 65,
+        head: [['STUDENT INFORMATION', '']],
+        body: [
+            ['Name', currentUser.name],
+            ['Register Number', currentUser.rollNum],
+            ['Branch/Department', sclassName.sclassName],
+            ['Semester', currentUser.semester || "N/A"],
+            ['Academic Year', '2023-2024'],
+            ['Report Date', currentDate]
+        ],
+        theme: 'grid',
+        headStyles: {
+            fillColor: primaryColor,
+            textColor: 255,
+            fontSize: 12,
+            halign: 'center'
+        },
+        bodyStyles: {
+            textColor: [33, 33, 33],
+            fontSize: 11,
+            cellPadding: 4
+        },
+        columnStyles: {
+            0: { fontStyle: 'bold', cellWidth: 60 },
+            1: { cellWidth: 'auto' }
+        }
+    });
+
+    // 📊 Academic Performance Summary
+    const overallResult = subjectMarks.every(result => result.marksObtained >= 40) ? 
+        { content: 'PASS', styles: { textColor: successColor } } : 
+        { content: 'FAIL', styles: { textColor: dangerColor } };
         const overallAttendancePercentage = calculateOverallAttendancePercentage(subjectAttendance);
-        // Header Section
-        // Header Section with Institute Logo
-        
-        doc.setFontSize(18);
-        doc.setFont("helvetica", "bold");
-        doc.text("N.R.A.M POLYTECHNIC, Nitte", pageWidth / 2, 20, { align: "center" });
-        doc.setFontSize(14);
-        doc.text("OFFICIAL MARK SHEET", pageWidth / 2, 28, { align: "center" });
-        doc.setFontSize(10);
-        // Institution Info
-        doc.setFontSize(10)
-        doc.setFont("helvetica", "normal");
-        doc.text("Affiliated to Department of Technical Education, Karnataka", pageWidth / 2, 35, { align: "center" });
-        doc.text("Academic Year: 2023-2024", pageWidth / 2, 40, { align: "center" });
-    
-        // Student Information Table
-        autoTable(doc, {
-            startY: 45,
-            theme: "grid",
-            head: [['Student Details', '']],
-            body: [
-                ['Name of Student', `${currentUser.name}`],
-                ['Branch', `${sclassName.sclassName}`],
-                ['Register Number', `${currentUser.rollNum}`]
-            ],
-            styles: { fontSize: 12, cellPadding: 1.5 ,textColor: 0},
-            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 12 },
-            tableLineColor: [0, 0, 0],
-            tableLineWidth: 0.1,
-        });
-    
-        // Marks Table
-        const tableData = subjectMarks.map((result) => [
-            result.subName.subName,
-            '100', // Assuming max marks is 100
-            result.marksObtained,
-            result.marksObtained >= 40 ? 'Pass' : 'Fail'
-        ]);
-    
-        autoTable(doc, {
-            startY: doc.lastAutoTable.finalY + 10,
-            head: [['Subject', 'Max Marks', 'Marks Obtained', 'Result']],
-            body: tableData,
-            styles: { fontSize: 10, cellPadding: 2, textColor: 0 },
-            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 12 }, // Blue color
-            theme: "grid"
-        });
-    
-        // Summary Table
-        autoTable(doc, {
-            startY: doc.lastAutoTable.finalY + 10,
-            body: [
-            ['Total Marks', totalMarks],
+
+    autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['ACADEMIC SUMMARY', '']],
+        body: [
+            ['Total Marks Obtained', totalMarks],
             ['Percentage', `${percentage}%`],
             ['CGPA', cgpa],
             ['Attendance Percentage', `${overallAttendancePercentage.toFixed(2)}%`],
-            ['Overall Result', subjectMarks.length > 0 && subjectMarks.every(result => result.marksObtained >= 40) ? 'Pass' : 'Fail'],
-            ['Eligibility', overallAttendancePercentage >= 70 ? 'Eligible' : 'Not Eligible']
+            ['Overall Result', overallResult],
+            ['Exam Eligibility', overallAttendancePercentage >= 70 ? 
+                { content: 'ELIGIBLE', styles: { textColor: successColor } } : 
+                { content: 'NOT ELIGIBLE', styles: { textColor: dangerColor } }]
+        ],
+        theme: 'grid',
+        headStyles: {
+            fillColor: primaryColor,
+            textColor: 255,
+            fontSize: 12,
+            halign: 'center'
+        },
+        bodyStyles: {
+            textColor: [33, 33, 33],
+            fontSize: 11,
+            cellPadding: 4
+        },
+        columnStyles: {
+            0: { fontStyle: 'bold', cellWidth: 80 },
+            1: { cellWidth: 'auto' }
+        }
+    });
+
+    // 📝 Subject-wise Marks
+    const marksData = subjectMarks.map(result => [
+        result.subName.subName,
+        '100',
+        result.marksObtained,
+        { 
+            content: result.marksObtained >= 40 ? 'PASS' : 'FAIL',
+            styles: {
+                textColor: result.marksObtained >= 40 ? successColor : dangerColor,
+                fontStyle: 'bold'
+            }
+        },
+        result.marksObtained >= 40 ? '✓' : '✗'
+    ]);
+
+    autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 15,
+        head: [
+            [
+                'Subject', 
+                'Max Marks', 
+                'Marks Obtained', 
+                'Result', 
+                'Status'
+            ]
+        ],
+        body: marksData,
+        headStyles: {
+            fillColor: [52, 152, 219], // Light blue
+            textColor: 255,
+            fontSize: 11,
+            halign: 'center'
+        },
+        bodyStyles: {
+            textColor: [33, 33, 33],
+            fontSize: 10,
+            cellPadding: 3,
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { cellWidth: 60, halign: 'left' },  // Subject column left-aligned
+            2: { fontStyle: 'bold' },  // Marks obtained bold
+            3: { cellWidth: 30 }  // Result column narrower
+        },
+        alternateRowStyles: {
+            fillColor: [245, 245, 245]
+        },
+        margin: { top: 10 },
+        didDrawPage: function () {
+           
+            // Footer on each page
+            doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
+        }
+    });
+
+    // ℹ️ Grading Information
+    autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        head: [['GRADING SYSTEM', 'Grade', 'CGPA', 'Percentage']],
+        body: [
+            ['Outstanding', 'A+', '10', '90-100%'],
+            ['Excellent', 'A', '9', '80-89%'],
+            ['Very Good', 'B+', '8', '70-79%'],
+            ['Good', 'B', '7', '60-69%'],
+            ['Average', 'C', '6', '50-59%'],
+            ['Below Average', 'D', '5', '40-49%'],
+            ['Fail', 'F', '0', 'Below 40%']
+        ],
+        headStyles: {
+            fillColor: primaryColor,
+            textColor: 255,
+            fontSize: 11,
+            halign: 'center'
+        },
+        bodyStyles: {
+            textColor: [33, 33, 33],
+            fontSize: 10,
+            cellPadding: 3,
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { halign: 'left', fontStyle: 'bold' }
+        }
+    });
+
+    // 📌 Important Notes
+    autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        body: [
+            [
+                { 
+                    content: 'IMPORTANT NOTES:', 
+                    styles: { 
+                        fontStyle: 'bold', 
+                        fontSize: 11,
+                        textColor: dangerColor
+                    } 
+                }
             ],
-            styles: { fontSize: 12, cellPadding: 2 , textColor: 0},
-            columnStyles: {
-            0: { cellWidth: 80, fontStyle: 'bold' },
-            1: { cellWidth: 80 }
-            },
-            theme: 'grid'
-        });
-    
-        // Footer
-        doc.setFontSize(10);
-        doc.text("Note: This is an official computer-generated document, no signature required", pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
-    
-        doc.save(`${currentUser.name}_MarkSheet.pdf`);
-    };
-    
+            [
+                '• Minimum 40% marks required in each subject to pass'
+            ],
+            [
+                '• Minimum 70% attendance required to be eligible for exams'
+            ],
+            [
+                '• This is an official computer-generated document'
+            ],
+            [
+                '• Contact examination department for any discrepancies'
+            ]
+        ],
+        theme: 'plain',
+        bodyStyles: {
+            textColor: [33, 33, 33],
+            fontSize: 10,
+            cellPadding: 2
+        }
+    });
 
+    // 🏁 Footer
+    doc.setFontSize(8);
+    doc.setTextColor(100);
+    doc.text("This document is system generated and does not require signature", pageWidth / 2, doc.internal.pageSize.getHeight() - 15, { align: "center" });
+    doc.text(`Report ID: ${currentUser.rollNum}-${Date.now().toString().slice(-6)}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
 
+    // 💾 Save PDF
+    doc.save(`${currentUser.name}_MarkSheet.pdf`);
+};
     const renderChartSection = () => {
         return <CustomBarChart chartData={subjectMarks} dataKey="marksObtained" />;
     };
