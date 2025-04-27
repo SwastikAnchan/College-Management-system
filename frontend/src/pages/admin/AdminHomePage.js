@@ -23,6 +23,7 @@ const AdminHomePage = () => {
     const { currentUser } = useSelector(state => state.user);
     
     const adminID = currentUser?._id;
+    const TOTAL_SESSIONS = 30; // Fixed total sessions as defined during class creation
 
     React.useEffect(() => {
         if (adminID) {
@@ -32,51 +33,44 @@ const AdminHomePage = () => {
         }
     }, [adminID, dispatch]);
 
-    // Modified attendance calculation
+    // Calculate attendance for each student using fixed total sessions
     const getStudentAttendanceData = (student) => {
         const attendanceRecords = student?.attendance || [];
         const presentSessions = attendanceRecords.filter(record => record.status === 'Present').length;
-        const totalSessions = attendanceRecords.length;
         
+        const attendancePercentage = (presentSessions / TOTAL_SESSIONS) * 100;
+            
         return {
-            totalSessions,
+            totalSessions: TOTAL_SESSIONS,
             presentSessions,
-            attendancePercentage: totalSessions > 0 
-                ? (presentSessions / totalSessions) * 100 
-                : 0
+            attendancePercentage,
+            isShortage: attendancePercentage < 75  // Flag to identify attendance shortage
         };
     };
 
-    const attendanceShortageList = studentsList.map(student => {
+    // Process all students and identify those with attendance shortage
+    const processedStudents = studentsList.map(student => {
         const attendanceData = getStudentAttendanceData(student);
         return {
             ...student,
             ...attendanceData,
             className: student?.sclassName?.sclassName || 'N/A'
         };
-    }).filter(student => student.attendancePercentage < 75)
-    //   .sort((a, b) => a.attendancePercentage - b.attendancePercentage);
+    });
+
+    // Filter students with attendance shortage (less than 75%)
+    const attendanceShortageList = processedStudents.filter(student => student.isShortage);
 
     // School statistics
     const numberOfStudents = studentsList.length;
     const numberOfClasses = sclassesList.length;
     const numberOfTeachers = teachersList.length;
 
-    // Academic performance
-    const passedStudents = studentsList.filter(student => 
-        student?.result?.overallStatus === 'pass'
-    ).length;
-    const failedStudents = numberOfStudents - passedStudents;
-    const passPercentage = numberOfStudents > 0 
-        ? (passedStudents / numberOfStudents) * 100 
-        : 0;
-
-    // Overall attendance calculation
-    const overallAttendanceData = studentsList.reduce((acc, student) => {
-        const { totalSessions, presentSessions } = getStudentAttendanceData(student);
+    // Calculate overall attendance percentage for all students
+    const overallAttendanceData = processedStudents.reduce((acc, student) => {
         return {
-            totalSessions: acc.totalSessions + totalSessions,
-            presentSessions: acc.presentSessions + presentSessions
+            totalSessions: acc.totalSessions + student.totalSessions,
+            presentSessions: acc.presentSessions + student.presentSessions
         };
     }, { totalSessions: 0, presentSessions: 0 });
 
@@ -117,7 +111,13 @@ const AdminHomePage = () => {
                         <Data start={0} end={numberOfTeachers} duration={2.5} />
                     </StyledPaper>
                 </Grid>
-               
+                <Grid item xs={12} md={3} lg={3}>
+                    <StyledPaper elevation={3}>
+                        <img src={Analytics} alt="Overall Attendance" style={iconStyle} />
+                        <Title>Overall Attendance</Title>
+                        <Data start={0} end={overallAttendancePercentage} duration={2.5} suffix="%" />
+                    </StyledPaper>
+                </Grid>
 
                 {/* Attendance Shortage Table */}
                 <Grid item xs={12}>
@@ -149,11 +149,11 @@ const AdminHomePage = () => {
                                                 <StyledTableCell 
                                                     align="right"
                                                     sx={{
-                                                        color: student.attendancePercentage < 50 ? 'error.main' : 'warning.main',
+                                                        color: student.attendancePercentage < 75 ? 'error.main' : 'inherit',
                                                         fontWeight: 'bold'
                                                     }}
                                                 >
-                                                    {student.attendancePercentage.toFixed(1)}%
+                                                    {student.attendancePercentage.toFixed(2)}%
                                                 </StyledTableCell>
                                             </StyledTableRow>
                                         ))
@@ -180,6 +180,9 @@ const AdminHomePage = () => {
         </Container>
     );
 };
+
+// Styles remain the same as in your original code
+// ... (iconStyle, StyledPaper, Title, Data, StyledTableRow, StyledTableCell)
 
 // Styles
 const iconStyle = {
