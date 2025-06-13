@@ -185,6 +185,39 @@ const StudentSubjects = () => {
             columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55 }, 1: { cellWidth: 'auto' } }
         });
     
+        
+        // Subject Marks
+        const marksData = subjectMarks.map(result => [
+            result.subName.subName,
+            '100',
+            result.marksObtained,
+            {
+                content: result.marksObtained >= 40 ? 'PASS' : 'FAIL',
+                styles: {
+                    textColor: result.marksObtained >= 40 ? successColor : dangerColor,
+                    fontStyle: 'bold'
+                }
+            },
+            result.marksObtained >= 40 ? '✓' : '✗'
+        ]);
+    
+        autoTable(doc, {
+            startY: doc.lastAutoTable.finalY + 8,
+            head: [['Subject', 'Max', 'Obtained', 'Result']],
+            body: marksData,
+            headStyles: { fillColor: [52, 152, 219], textColor: 255, fontSize: 10 },
+            bodyStyles: { textColor: [33, 33, 33], fontSize: 10, cellPadding: 2 },
+            columnStyles: {
+                0: { cellWidth: 60, halign: 'left' },
+                2: { fontStyle: 'bold' },
+                3: { cellWidth: 25 }
+            },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            didDrawPage: function () {
+                doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
+            }
+        });
+    
         // Academic Summary
         const overallResult = subjectMarks.every(result => result.marksObtained >= 40)
             ? { content: 'PASS', styles: { textColor: successColor } }
@@ -210,54 +243,22 @@ const StudentSubjects = () => {
             columnStyles: { 0: { fontStyle: 'bold', cellWidth: 75 }, 1: { cellWidth: 'auto' } }
         });
     
-        // Subject Marks
-        const marksData = subjectMarks.map(result => [
-            result.subName.subName,
-            '100',
-            result.marksObtained,
-            {
-                content: result.marksObtained >= 40 ? 'PASS' : 'FAIL',
-                styles: {
-                    textColor: result.marksObtained >= 40 ? successColor : dangerColor,
-                    fontStyle: 'bold'
-                }
-            },
-            result.marksObtained >= 40 ? '✓' : '✗'
-        ]);
-    
-        autoTable(doc, {
-            startY: doc.lastAutoTable.finalY + 8,
-            head: [['Subject', 'Max', 'Obtained', 'Result', 'Status']],
-            body: marksData,
-            headStyles: { fillColor: [52, 152, 219], textColor: 255, fontSize: 10 },
-            bodyStyles: { textColor: [33, 33, 33], fontSize: 9, cellPadding: 2 },
-            columnStyles: {
-                0: { cellWidth: 60, halign: 'left' },
-                2: { fontStyle: 'bold' },
-                3: { cellWidth: 25 }
-            },
-            alternateRowStyles: { fillColor: [245, 245, 245] },
-            didDrawPage: function () {
-                doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
-            }
-        });
-    
-        // Grading Info
-        autoTable(doc, {
-            startY: doc.lastAutoTable.finalY + 8,
-            head: [['GRADING SYSTEM', 'Grade', 'CGPA', 'Percentage']],
-            body: [
-                ['Outstanding', 'A+', '10', '90-100%'],
-                ['Excellent', 'A', '9', '80-89%'],
-                ['Very Good', 'B+', '8', '70-79%'],
-                ['Good', 'B', '7', '60-69%'],
-                ['Average', 'C', '6', '50-59%'],
-                ['Below Average', 'D', '5', '40-49%'],
-                ['Fail', 'F', '0', 'Below 40%']
-            ],
-            headStyles: { fillColor: primaryColor, textColor: 255, fontSize: 10 },
-            bodyStyles: { textColor: [33, 33, 33], fontSize: 9, cellPadding: 2 }
-        });
+        // // Grading Info
+        // autoTable(doc, {
+        //     startY: doc.lastAutoTable.finalY + 8,
+        //     head: [['GRADING SYSTEM', 'Grade', 'CGPA', 'Percentage']],
+        //     body: [
+        //         ['Outstanding', 'A+', '10', '90-100%'],
+        //         ['Excellent', 'A', '9', '80-89%'],
+        //         ['Very Good', 'B+', '8', '70-79%'],
+        //         ['Good', 'B', '7', '60-69%'],
+        //         ['Average', 'C', '6', '50-59%'],
+        //         ['Below Average', 'D', '5', '40-49%'],
+        //         ['Fail', 'F', '0', 'Below 40%']
+        //     ],
+        //     headStyles: { fillColor: primaryColor, textColor: 255, fontSize: 10 },
+        //     bodyStyles: { textColor: [33, 33, 33], fontSize: 9, cellPadding: 2 }
+        // });
     
         // Notes
         autoTable(doc, {

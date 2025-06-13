@@ -45,7 +45,7 @@ const Homepage = () => {
                       <GradientText>
                         Welcome to
                         <br />
-                       Edu Sprint 
+                       EduSphere
                         <br />
                        
                       </GradientText>
